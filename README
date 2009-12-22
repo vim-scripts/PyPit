@@ -1,0 +1,10 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2895
+
+You can put configurations such as passwords or user names out of vimrc.
+
+When you want to backup vimrc into public repository service such as GitHub, you may put secret informations out of vimrc.
+But how?
+
+pypit.vim (and its parents, pitconfig.vim and rbpit.vim) can.
+
+As pitconfig.vim requires Perl interface, and rbpit.vim requires Ruby interface, pypit.vim requires Python interface.
