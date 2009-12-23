@@ -2,8 +2,8 @@
 " Author: OGINO Masanori <masanori.ogino@gmail.com>
 " Original File: rbpit.vim
 " Original Author: Koutarou Tanaka <from.kyushu.island@gmail.com>
-" Last Change: 2009-12-20T04:50:26
-" Version: 0.0.1
+" Last Change: 2009-12-23T02:26:24
+" Version: 0.0.2
 " License: BSD License
 
 " Initialize {{{
@@ -31,6 +31,40 @@ python << __END__
 from pit import Pit
 import re
 import vim
+
+def clean(D):
+    """Clean dict."""
+    if (len(D) == 2
+        and 'username' in D
+        and D['username'] == ''
+        and 'password' in D
+        and D['password'] == ''):
+        return {}
+    return D
+
+def get(profname):
+    """Get configurations."""
+    return clean(Pit.get(profname))
+
+def set(profname, data):
+    """Set configurations."""
+    Pit.set(profname, {'data': data})
+
+def get_variable(name):
+    """Evaluation."""
+    value = vim.eval(name)
+    value_type = int(vim.eval('type(%s)' % name))
+    if value_type == 0:
+        value = int(value)
+    elif value_type == 3:
+        for i in range(len(value)):
+            value[i] = get_variable('%s[%s]' % (name, i))
+    elif value_type == 4:
+        for key in value:
+            value[key] = get_variable('%s["%s"]' % (name, key))
+    elif value_type == 5:
+        value = float(value)
+    return value
 __END__
 " }}}
 
@@ -45,15 +79,20 @@ function! PitGet(...)
   let l:ret = {}
 " Python: get pit config as JSON string {{{
 python << __END__
-config = Pit.get(vim.eval('l:profname'))
+config = get(vim.eval('l:profname'))
 json_str = ''
 for key, value in config.iteritems():
     if json_str == '':
-        json_str += '{"%s": "%s"' % (key, value)
+        json_str += '{'
     else:
-        json_str += ', "%s": "%s"' % (key, value)
-json_str += '}'
-vim.command('let l:ret = %s' % (json_str,))
+        json_str += ', '
+    if isinstance(value, basestring):
+        json_str += '"%s": "%s"' % (key, value)
+    else:
+        json_str += '"%s": %s' % (key, value)
+if json_str != '':
+    json_str += '}'
+    vim.command('let l:ret = %s' % (json_str,))
 __END__
 " }}}
   if !exists('l:ret')
@@ -75,8 +114,8 @@ function! PitSet(...)
 " Python: save to pit config {{{
 python << __END__
 profname = vim.eval('l:profname')
-data = vim.eval('l:data')
-Pit.set(profname, {'data': data})
+data = get_variable('l:data')
+set(profname, data)
 __END__
 " }}}
 endfunction
@@ -84,7 +123,7 @@ endfunction
 function! s:PitLoad(profname)
 " Python: load pit config to global scope {{{
 python << __END__
-config = Pit.get(vim.eval('a:profname'))
+config = get(vim.eval('a:profname'))
 for key, value in config.iteritems():
     key = 'g:%s' % (key,)
     if isinstance(value, basestring):
@@ -103,12 +142,13 @@ function! s:PitAdd(...)
 python << __END__
 profname = vim.eval('l:profname')
 varcount = int(vim.eval('a:0'))
-config = Pit.get(profname)
+config = get(profname)
 for i in range(1, varcount+1):
     varname = vim.eval('a:%d' % i)
     name = re.sub('[gsl]:', '', varname)
-    config[name] = vim.eval(varname)
-Pit.set(profname, {'data': config})
+    value = get_variable(varname)
+    config[name] = value
+set(profname, config)
 __END__
 " }}}
 endfunction
@@ -120,16 +160,18 @@ python << __END__
 profname = vim.eval('l:profname')
 varcount = int(vim.eval('a:0'))
 varnames = []
-config = Pit.get(profname)
+config = get(profname)
 data = {}
 for i in range(1, varcount+1):
     varname = vim.eval('a:%d' % i)
     name = re.sub('[gsl]:', '', varname)
     varnames.append(name)
-for key, value in config.iteritems():
+for key in config:
     if key not in varnames:
-        data[key] = vim.eval('g:%s' % (key,))
-Pit.set(profname, {'data': data})
+        name = 'g:%s' % key
+        value = get_variable(name)
+        data[key] = value
+set(profname, data)
 __END__
 " }}}
 endfunction
@@ -178,11 +220,13 @@ function! s:PitSave(...)
 " Python: save to pit config {{{
 python << __END__
 profname = vim.eval('l:profname')
-config = Pit.get(profname)
+config = get(profname)
 data = {}
-for key, value in config.iteritems():
-    data[key] = vim.eval('g:%s' % (key,))
-Pit.set(profname, {'data': data})
+for key in config:
+    name = 'g:%s' % key
+    value = get_variable(name)
+    data[key] = value
+set(profname, data)
 __END__
 " }}}
 endfunction

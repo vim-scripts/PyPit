@@ -1,5 +1,5 @@
 *pypit.txt*  Python version of pitconfig.vim
-Version 0.0.1
+Version 0.0.2
 Copyright (C) 2009 OGINO Masanori <masanori.ogino@gmail.com>
 License: BSD License
     Copyright (c) 2009 OGINO Masanori <masanori.ogino@gmail.com>
@@ -38,6 +38,7 @@ CONTENTS                                                       *pypit-contents*
 
 Introduction        |pypit-introduction|
 Commands            |pypit-commands|
+Functions           |pypit-functions|
 Variables           |pypit-variables|
 Bugs                |pypit-bugs|
 ChangeLog           |pypit-changelog|
@@ -45,7 +46,8 @@ ChangeLog           |pypit-changelog|
 ===============================================================================
 INTRODUCTION                                               *pypit-introduction*
 
-*pypit* is a plugin to provide a way to store configurations such as password.
+*pypit* is a plugin to provide a way to store configurations such as passwords
+or user names out of |vimrc|.
 
 ===============================================================================
 COMMANDS                                                       *pypit-commands*
@@ -78,6 +80,21 @@ COMMANDS                                                       *pypit-commands*
     Show current pit config named as 'profile'.
 
 ===============================================================================
+FUNCTIONS                                                     *pypit-functions*
+
+PitGet()                                                             *PitGet()*
+    Get current pit config named as |g:pypit_default|.
+
+PitGet(profile)
+    Get current pit config named as 'profile'.
+
+PitSet(data)                                                         *PitSet()*
+    Set data as current pit config named as |g:pypit_default|.
+
+PitSet(data, profile)
+    Set data as current pit config named as 'profile'.
+
+===============================================================================
 VARIABLES                                                     *pypit-variables*
 
 g:pypit_default                                               *g:pypit_default*
@@ -96,12 +113,16 @@ g:pypit_autoload                                             *g:pypit_autoload*
 ===============================================================================
 BUGS                                                               *pypit-bugs*
 
-- |:PitAdd| and so on treat numbers as strings.  (maybe Vim's bug...)
-  |:PitEdit| avoids this bug, so you may launch it after adding number
-  variables.  I hope to fix it. Any help is welcome!
+- Currently there is no known bug.
 
 ===============================================================================
 CHANGELOG                                                     *pypit-changelog*
 
 0.0.1  2009-12-20T02:34:05
     - Initial version.
+0.0.2  2009-12-23T01:46:41
+    - Fix bug of |PitGet()|.
+    - Fix bug of |:PitAdd|.
+    - Fix bug of |:PitDel|.
+    - Fix bug of |:PitSave|.
+    - Add |pypit-functions| section to document.
